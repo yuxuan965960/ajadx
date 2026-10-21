@@ -13,9 +13,21 @@ android {
         multiDexEnabled true
     }
 
+    // release 直接用 debug 签名（AGP 会自动生成 debug.keystore，CI 上也能跑）
+    // 这样产出的 release 包可以直接安装，同时 debuggable=false
+    signingConfigs {
+        release {
+            initWith signingConfigs.debug
+        }
+    }
+
     buildTypes {
         release {
+            // 关键：release 必须 debuggable=false，否则 Android 会强制开 CheckJNI，
+            // 遇到非 UTF-8 文件名（NewStringUTF 非法字节）时会直接 SIGABRT 闪退
+            debuggable false
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
