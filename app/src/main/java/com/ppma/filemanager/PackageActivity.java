@@ -127,8 +127,10 @@ public class PackageActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    decompiler.loadFile(new File(fileName));
-                } catch (JadxException e) {
+                    decompiler.getArgs().setInputFile(new File(fileName));
+                    // jadx 1.5.6：load() 取代旧版 loadFile()
+                    decompiler.load();
+                } catch (Exception e) {
                     Toast.makeText(PackageActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
                     finish();
                 }

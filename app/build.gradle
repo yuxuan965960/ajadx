@@ -6,10 +6,11 @@ android {
 
     defaultConfig {
         applicationId "com.ppma.jadx"
-        minSdk 21
+        // jadx 1.5.6 使用 java.nio.file 等新 API，最低需要 Android 8.0 (API 26)
+        minSdk 26
         targetSdk 28
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
         multiDexEnabled true
     }
 
@@ -48,13 +49,18 @@ android {
     packaging {
         resources {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt',
-                         'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/ASL2.0']
+                         'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/ASL2.0',
+                         'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA',
+                         'META-INF/versions/9/module-info.class',
+                         'META-INF/*.kotlin_module']
         }
     }
 }
 
 dependencies {
+    // 本地 libs：jadx-1.5.6.jar（裁剪版 jadx-core：api/core/zip/plugins + 其依赖）
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
@@ -62,9 +68,8 @@ dependencies {
     implementation 'com.yanzhenjie:permission:1.0.4'
     implementation 'com.fifesoft:rsyntaxtextarea:2.5.8'
     implementation project(':codeview')
-    implementation 'org.slf4j:slf4j-api:1.7.10'
-    implementation project(':jadx')
-    implementation 'com.intellij:annotations:12.0'
     implementation 'com.github.bmelnychuk:atv:1.2.9'
-    implementation 'commons-io:commons-io:2.4'
+
+    // 注意：slf4j / commons-io / org.jetbrains.annotations 已随 jadx jar 提供，
+    // 不能再单独引入，否则会 Duplicate class 冲突
 }

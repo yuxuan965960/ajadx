@@ -100,7 +100,8 @@ public class JClass extends JNode {
 
 	@Override
 	public int getLine() {
-		return cls.getDecompiledLine();
+		// jadx 1.5.6 的 JavaClass 没有 getDecompiledLine()
+		return 0;
 	}
 
 	@Override

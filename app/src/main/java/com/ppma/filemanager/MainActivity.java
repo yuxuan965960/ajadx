@@ -126,10 +126,12 @@ public class MainActivity extends AppCompatActivity {
         args.setOutDir(new File(fileName.substring(0, fileName.lastIndexOf(".")) + "_src"));
         args.setThreadsCount(1);
         //args.setSkipResources(true);
+        args.setInputFile(new File(fileName));
         final JadxDecompiler decompiler = new JadxDecompiler(args);
         try {
-            decompiler.loadFile(new File(fileName));
-        } catch (JadxException e) {
+            // jadx 1.5.6：不再有 loadFile(File)，改为 args.setInputFile() + load()
+            decompiler.load();
+        } catch (Exception e) {
             Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
             return;
         }
@@ -142,23 +144,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 try {
-
-                    ThreadPoolExecutor ex = (ThreadPoolExecutor) decompiler.getSaveExecutor();
-
-                    ex.shutdown();
-
-                    while (ex.isTerminating()) {
-
-                        long total = ex.getTaskCount();
-
-                        long done = ex.getCompletedTaskCount();
-
-                        progressDialog.setProgress((int) (done * 100.0 / (double) total));
-
-                        Thread.sleep(300);
-
-                    }
-
+                    // jadx 1.5.6：save() 内部自行调度保存任务，无需再手动轮询 getSaveExecutor()
+                    progressDialog.setIndeterminate(true);
+                    decompiler.save();
                     progressDialog.cancel();
                     runOnUiThread(new Runnable() {
                         @Override
@@ -166,10 +154,9 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "反编译完成", Toast.LENGTH_SHORT).show();
                         }
                     });
-
-                } catch (InterruptedException e) {
-
+                } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
+                }
 
                 }
 
@@ -199,10 +186,12 @@ public class MainActivity extends AppCompatActivity {
         }
         JadxArgs args = new JadxArgs();
         args.setOutDir(new File(path));
+        args.setInputFile(file);
         JadxDecompiler jadx = new JadxDecompiler(args);
         try {
-            jadx.loadFile(file);
-        } catch (JadxException e) {
+            // jadx 1.5.6：args.setInputFile() + load()
+            jadx.load();
+        } catch (Exception e) {
             e.printStackTrace();
             return;
         }
