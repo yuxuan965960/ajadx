@@ -157,11 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
                 }
-
-                }
-
             }
-
         };
         new Thread(save).start();
 
