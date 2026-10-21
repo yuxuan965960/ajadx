@@ -131,7 +131,13 @@ public class MainActivity extends AppCompatActivity {
         try {
             // jadx 1.5.6：不再有 loadFile(File)，改为 args.setInputFile() + load()
             decompiler.load();
-        } catch (Exception e) {
+        } catch (OutOfMemoryError oom) {
+            System.gc();
+            Toast.makeText(MainActivity.this,
+                    "内存不足（堆上限 " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB），请清理后台后重试",
+                    Toast.LENGTH_LONG).show();
+            return;
+        } catch (Throwable e) {
             Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
             return;
         }
@@ -145,17 +151,47 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     // jadx 1.5.6：save() 内部自行调度保存任务，无需再手动轮询 getSaveExecutor()
-                    progressDialog.setIndeterminate(true);
-                    decompiler.save();
-                    progressDialog.cancel();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            try {
+                                progressDialog.setIndeterminate(true);
+                            } catch (Throwable ignore) {
+                            }
+                        }
+                    });
+                    decompiler.save();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
+                            try {
+                                if (progressDialog.isShowing()) {
+                                    progressDialog.dismiss();
+                                }
+                            } catch (Throwable ignore) {
+                            }
                             Toast.makeText(MainActivity.this, "反编译完成", Toast.LENGTH_SHORT).show();
                         }
                     });
-                } catch (Exception e) {
-                    Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
+                } catch (final Throwable e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
+                            try {
+                                if (progressDialog.isShowing()) {
+                                    progressDialog.dismiss();
+                                }
+                            } catch (Throwable ignore) {
+                            }
+                            Toast.makeText(MainActivity.this, "错误信息：" + e, Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             }
         };
