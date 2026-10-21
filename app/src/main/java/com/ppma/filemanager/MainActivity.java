@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 //cls.decompile();
-                String className = classNode.getClassInfo().getFullPath() + ".java";
+                String className = cls.getFullName() + ".java";
                 String javaCode = cls.getCode();
                 if (javaCode == null)
 
