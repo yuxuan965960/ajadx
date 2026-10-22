@@ -134,7 +134,35 @@ public String getContent() {
 
 	@Override
 	public String getName() {
-		return cls.getName();
+		String name = cls.getName();
+		// 只显示类名本身，去掉包名前缀（如 xxx.xxx.xxxx.a -> a），
+		// 否则列表项被包名占满，真正的类名反而看不到
+		if (name != null) {
+			int idx = name.lastIndexOf('.');
+			if (idx >= 0 && idx < name.length() - 1) {
+				name = name.substring(idx + 1);
+			}
+		}
+		return name;
+	}
+
+	/** 所在包的全名，用于列表第二行灰字展示 */
+	public String getPackageName() {
+		try {
+			String pkg = cls.getPackage();
+			return pkg == null ? "" : pkg;
+		} catch (Throwable t) {
+			return "";
+		}
+	}
+
+	/** 类的完整名（包名 + 类名） */
+	public String getClassFullName() {
+		try {
+			return cls.getFullName();
+		} catch (Throwable t) {
+			return cls.getName();
+		}
 	}
 
 	public String getFullName() {
