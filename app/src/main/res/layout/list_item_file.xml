@@ -28,10 +28,10 @@
         />
 
     <RelativeLayout
-        android:layout_toLeftOf="@id/dir_enter_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/fileIcon"
+        android:layout_marginRight="28dp"
         android:layout_centerVertical="true"
         android:gravity="left"
         android:paddingLeft="10dp"
@@ -39,13 +39,13 @@
 
         <TextView
             android:id="@+id/fileName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:gravity="left"
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textColor="#333333"
-            android:maxLines="1"
-            android:ellipsize="middle"
+            android:maxLines="2"
+            android:ellipsize="end"
             />
 
         <TextView

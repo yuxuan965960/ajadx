@@ -9,8 +9,8 @@ android {
         // jadx 1.5.6 使用 java.nio.file 等新 API，最低需要 Android 8.0 (API 26)
         minSdk 26
         targetSdk 28
-        versionCode 4
-        versionName "1.4"
+        versionCode 5
+        versionName "1.5"
         multiDexEnabled true
     }
 
