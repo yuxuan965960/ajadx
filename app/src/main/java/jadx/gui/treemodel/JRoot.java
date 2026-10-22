@@ -48,7 +48,7 @@ public class JRoot extends JNode {
         JResource root = new JResource(null, "Resources", JResType.ROOT);
         String splitPathStr = Pattern.quote(File.separator);
         for (ResourceFile rf : resources) {
-            String[] parts = new File(rf.getOriginalName()).getPath().split(splitPathStr);
+            String[] parts = new File(rf.getName()).getPath().split(splitPathStr);
             JResource curRf = root;
             int count = parts.length;
             for (int i = 0; i < count; i++) {

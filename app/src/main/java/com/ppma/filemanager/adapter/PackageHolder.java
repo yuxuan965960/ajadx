@@ -23,15 +23,6 @@ public class PackageHolder extends RecyclerViewHolder<PackageHolder> {
     @Override
     public void onBindViewHolder(PackageHolder lineHolder, RecyclerViewAdapter adapter, int position) {
         JNode jPackage = (JNode) adapter.getItem(position);
-        // 面包屑只显示包名的最后一段（如 com.google.common -> common），
-        // 完整路径太长会把标题栏撑乱、后面层级被挤出屏幕
-        String name = jPackage.getName();
-        if (name != null) {
-            int idx = name.lastIndexOf('.');
-            if (idx >= 0 && idx < name.length() - 1) {
-                name = name.substring(idx + 1);
-            }
-        }
-        lineHolder.textView.setText(name + ">");
+        lineHolder.textView.setText(jPackage.getName() + ">");
     }
 }

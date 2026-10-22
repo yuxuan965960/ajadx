@@ -126,18 +126,10 @@ public class MainActivity extends AppCompatActivity {
         args.setOutDir(new File(fileName.substring(0, fileName.lastIndexOf(".")) + "_src"));
         args.setThreadsCount(1);
         //args.setSkipResources(true);
-        args.setInputFile(new File(fileName));
         final JadxDecompiler decompiler = new JadxDecompiler(args);
         try {
-            // jadx 1.5.6：不再有 loadFile(File)，改为 args.setInputFile() + load()
-            decompiler.load();
-        } catch (OutOfMemoryError oom) {
-            System.gc();
-            Toast.makeText(MainActivity.this,
-                    "内存不足（堆上限 " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB），请清理后台后重试",
-                    Toast.LENGTH_LONG).show();
-            return;
-        } catch (Throwable e) {
+            decompiler.loadFile(new File(fileName));
+        } catch (JadxException e) {
             Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
             return;
         }
@@ -150,50 +142,39 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 try {
-                    // jadx 1.5.6：save() 内部自行调度保存任务，无需再手动轮询 getSaveExecutor()
+
+                    ThreadPoolExecutor ex = (ThreadPoolExecutor) decompiler.getSaveExecutor();
+
+                    ex.shutdown();
+
+                    while (ex.isTerminating()) {
+
+                        long total = ex.getTaskCount();
+
+                        long done = ex.getCompletedTaskCount();
+
+                        progressDialog.setProgress((int) (done * 100.0 / (double) total));
+
+                        Thread.sleep(300);
+
+                    }
+
+                    progressDialog.cancel();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                progressDialog.setIndeterminate(true);
-                            } catch (Throwable ignore) {
-                            }
-                        }
-                    });
-                    decompiler.save();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isFinishing() || isDestroyed()) {
-                                return;
-                            }
-                            try {
-                                if (progressDialog.isShowing()) {
-                                    progressDialog.dismiss();
-                                }
-                            } catch (Throwable ignore) {
-                            }
                             Toast.makeText(MainActivity.this, "反编译完成", Toast.LENGTH_SHORT).show();
                         }
                     });
-                } catch (final Throwable e) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isFinishing() || isDestroyed()) {
-                                return;
-                            }
-                            try {
-                                if (progressDialog.isShowing()) {
-                                    progressDialog.dismiss();
-                                }
-                            } catch (Throwable ignore) {
-                            }
-                            Toast.makeText(MainActivity.this, "错误信息：" + e, Toast.LENGTH_LONG).show();
-                        }
-                    });
+
+                } catch (InterruptedException e) {
+
+                    Toast.makeText(MainActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
+
                 }
+
             }
+
         };
         new Thread(save).start();
 
@@ -218,12 +199,10 @@ public class MainActivity extends AppCompatActivity {
         }
         JadxArgs args = new JadxArgs();
         args.setOutDir(new File(path));
-        args.setInputFile(file);
         JadxDecompiler jadx = new JadxDecompiler(args);
         try {
-            // jadx 1.5.6：args.setInputFile() + load()
-            jadx.load();
-        } catch (Exception e) {
+            jadx.loadFile(file);
+        } catch (JadxException e) {
             e.printStackTrace();
             return;
         }
@@ -238,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 //cls.decompile();
-                String className = cls.getFullName() + ".java";
+                String className = classNode.getClassInfo().getFullPath() + ".java";
                 String javaCode = cls.getCode();
                 if (javaCode == null)
 

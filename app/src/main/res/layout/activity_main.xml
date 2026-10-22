@@ -20,7 +20,7 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/title_recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:background="#ffffff"
             >
         </android.support.v7.widget.RecyclerView>
@@ -36,7 +36,6 @@
 
     <RelativeLayout
         android:layout_below="@id/fileState_rel"
-        android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -44,8 +43,6 @@
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="8dp"
-            android:clipToPadding="false"
             android:background="#ffffff"
             >
         </android.support.v7.widget.RecyclerView>

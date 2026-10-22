@@ -42,7 +42,6 @@ public class PackageActivity extends AppCompatActivity {
     private String tmpFile;
     private JadxDecompiler decompiler;
     ProgressDialog progressDialog;
-    private volatile String loadErr = null;
 
     private ProgressDialog showWaitingDialog() {
         /* 等待Dialog具有屏蔽其他控件的交互能力
@@ -91,8 +90,7 @@ public class PackageActivity extends AppCompatActivity {
                         JClass jClass = (JClass) jNode;
                         ArrayList<String> info = new ArrayList<>();
                         info.add(jClass.getName()+".java");
-                        // 父类 + 内部类一起显示
-                        info.add(jClass.getContent());
+                        info.add(jClass.getCls().getCode());
                         FileUtil.openDecodeIntent(PackageActivity.this, info);
                         Toast.makeText(PackageActivity.this, ((JClass) jNode).getFullName(), Toast.LENGTH_SHORT).show();
                     }
@@ -123,31 +121,20 @@ public class PackageActivity extends AppCompatActivity {
         JadxArgs args = new JadxArgs();
         args.setSkipResources(true);
         args.setShowInconsistentCode(true);
-        // 降低解析期峰值内存（并行度越低，同时驻留的 dex 结构越少）
-        args.setThreadsCount(1);
         decompiler = new JadxDecompiler(args);
 
         new Thread() {
             @Override
             public void run() {
                 try {
-                    decompiler.getArgs().setInputFile(new File(fileName));
-                    // jadx 1.5.6：load() 取代旧版 loadFile()
-                    decompiler.load();
-                } catch (OutOfMemoryError oom) {
-                    // Java 堆耗尽属于 Error，不捕获会直接 FATAL；这里转成可提示的错误
-                    loadErr = "内存不足（堆上限 " + (Runtime.getRuntime().maxMemory() / 1024 / 1024)
-                            + "MB），请清理后台后重试，或换体积更小的 APK";
-                    decompiler = null;
-                    System.gc();
-                } catch (Throwable e) {
-                    loadErr = e.toString();
-                    decompiler = null;
+                    decompiler.loadFile(new File(fileName));
+                } catch (JadxException e) {
+                    Toast.makeText(PackageActivity.this, "错误信息：" + e.toString(), Toast.LENGTH_SHORT).show();
+                    finish();
                 }
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                mHandler.sendEmptyMessage(1);
+                Message msg = new Message();
+                msg.what = 1;
+                mHandler.sendMessage(msg);
             }
         }.start();
 
@@ -162,31 +149,10 @@ public class PackageActivity extends AppCompatActivity {
     public Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            // 页面已经关闭/destroy 时不再操作 Dialog，否则会抛
-            // IllegalArgumentException: View not attached to window manager
-            if (isFinishing() || isDestroyed()) {
-                return;
-            }
-            ProgressDialog pd = progressDialog;
-            progressDialog = null;
-            if (pd != null && pd.isShowing()) {
-                try {
-                    pd.dismiss();
-                } catch (Throwable ignore) {
-                    // 忽略窗口已分离等异常
-                }
-            }
-            if (loadErr != null) {
-                Toast.makeText(PackageActivity.this, "反编译失败：" + loadErr, Toast.LENGTH_LONG).show();
-                finish();
-                return;
-            }
-            try {
-                open();
-                Toast.makeText(PackageActivity.this, "加载完成", Toast.LENGTH_LONG).show();
-            } catch (Throwable t) {
-                Toast.makeText(PackageActivity.this, "错误信息：" + t, Toast.LENGTH_LONG).show();
-            }
+            progressDialog.cancel();
+            open();
+            Toast.makeText(PackageActivity.this, "加载完成", Toast.LENGTH_LONG).show();
+            //Toast.makeText(FileActivity.this, "运行时间：" + msg.obj + "s", Toast.LENGTH_LONG).show();
         }
     };
 
@@ -235,19 +201,6 @@ public class PackageActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        // 先断开对 Dialog 的引用，避免异步回调再去操作已销毁的窗口
-        progressDialog = null;
-        if (decompiler != null) {
-            try {
-                decompiler.close();
-            } catch (Throwable ignore) {
-            }
-            decompiler = null;
-        }
-        super.onDestroy();
-    }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK

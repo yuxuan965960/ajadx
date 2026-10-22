@@ -42,53 +42,10 @@ public class JClass extends JNode {
 		;
 	}
 
-public String getContent() {
-		StringBuilder sb = new StringBuilder();
-		try {
-			// 父类 + 所有内部类（A$Inner、A$Inner$1 ...）一起拼接显示
-			appendCodeWithInners(sb, cls);
-		} catch (Throwable ignore) {
-		}
-		if (sb.length() == 0) {
-			try {
-				return cls.getCode();
-			} catch (Throwable t) {
-				return "";
-			}
-		}
-		return sb.toString();
-	}
 
-	private static void appendCodeWithInners(StringBuilder sb, JavaClass c) {
-		String code;
-		try {
-			code = c.getCode();
-		} catch (Throwable t) {
-			code = null;
-		}
-		if (code == null || code.length() == 0) {
-			return;
-		}
-		if (sb.length() > 0) {
-			sb.append("\n\n");
-		}
-		sb.append("// ==================== ")
-				.append(c.getFullName())
-				.append(" ====================\n");
-		sb.append(code);
-		java.util.List<JavaClass> inners;
-		try {
-			inners = c.getInnerClasses();
-		} catch (Throwable t) {
-			inners = null;
-		}
-		if (inners != null) {
-			for (JavaClass inner : inners) {
-				appendCodeWithInners(sb, inner);
-			}
-		}
+	public String getContent() {
+		return cls.getCode();
 	}
-
 
 	@Override
 	public int getIcon() {
@@ -134,35 +91,7 @@ public String getContent() {
 
 	@Override
 	public String getName() {
-		String name = cls.getName();
-		// 只显示类名本身，去掉包名前缀（如 xxx.xxx.xxxx.a -> a），
-		// 否则列表项被包名占满，真正的类名反而看不到
-		if (name != null) {
-			int idx = name.lastIndexOf('.');
-			if (idx >= 0 && idx < name.length() - 1) {
-				name = name.substring(idx + 1);
-			}
-		}
-		return name;
-	}
-
-	/** 所在包的全名，用于列表第二行灰字展示 */
-	public String getPackageName() {
-		try {
-			String pkg = cls.getPackage();
-			return pkg == null ? "" : pkg;
-		} catch (Throwable t) {
-			return "";
-		}
-	}
-
-	/** 类的完整名（包名 + 类名） */
-	public String getClassFullName() {
-		try {
-			return cls.getFullName();
-		} catch (Throwable t) {
-			return cls.getName();
-		}
+		return cls.getName();
 	}
 
 	public String getFullName() {
@@ -171,8 +100,7 @@ public String getContent() {
 
 	@Override
 	public int getLine() {
-		// jadx 1.5.6 的 JavaClass 没有 getDecompiledLine()
-		return 0;
+		return cls.getDecompiledLine();
 	}
 
 	@Override
