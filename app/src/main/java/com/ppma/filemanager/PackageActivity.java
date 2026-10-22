@@ -91,7 +91,8 @@ public class PackageActivity extends AppCompatActivity {
                         JClass jClass = (JClass) jNode;
                         ArrayList<String> info = new ArrayList<>();
                         info.add(jClass.getName()+".java");
-                        info.add(jClass.getCls().getCode());
+                        // 父类 + 内部类一起显示
+                        info.add(jClass.getContent());
                         FileUtil.openDecodeIntent(PackageActivity.this, info);
                         Toast.makeText(PackageActivity.this, ((JClass) jNode).getFullName(), Toast.LENGTH_SHORT).show();
                     }

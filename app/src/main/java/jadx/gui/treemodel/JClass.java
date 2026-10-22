@@ -42,10 +42,53 @@ public class JClass extends JNode {
 		;
 	}
 
-
-	public String getContent() {
-		return cls.getCode();
+public String getContent() {
+		StringBuilder sb = new StringBuilder();
+		try {
+			// 父类 + 所有内部类（A$Inner、A$Inner$1 ...）一起拼接显示
+			appendCodeWithInners(sb, cls);
+		} catch (Throwable ignore) {
+		}
+		if (sb.length() == 0) {
+			try {
+				return cls.getCode();
+			} catch (Throwable t) {
+				return "";
+			}
+		}
+		return sb.toString();
 	}
+
+	private static void appendCodeWithInners(StringBuilder sb, JavaClass c) {
+		String code;
+		try {
+			code = c.getCode();
+		} catch (Throwable t) {
+			code = null;
+		}
+		if (code == null || code.length() == 0) {
+			return;
+		}
+		if (sb.length() > 0) {
+			sb.append("\n\n");
+		}
+		sb.append("// ==================== ")
+				.append(c.getFullName())
+				.append(" ====================\n");
+		sb.append(code);
+		java.util.List<JavaClass> inners;
+		try {
+			inners = c.getInnerClasses();
+		} catch (Throwable t) {
+			inners = null;
+		}
+		if (inners != null) {
+			for (JavaClass inner : inners) {
+				appendCodeWithInners(sb, inner);
+			}
+		}
+	}
+
 
 	@Override
 	public int getIcon() {

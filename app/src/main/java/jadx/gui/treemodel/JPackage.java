@@ -21,11 +21,38 @@ public class JPackage extends JNode implements Comparable<JPackage> {
 	public JPackage(JavaPackage pkg) {
 		this.name = pkg.getName();
 		List<JavaClass> javaClasses = pkg.getClasses();
+		java.util.Set<String> names = new java.util.HashSet<String>(javaClasses.size());
+		for (JavaClass javaClass : javaClasses) {
+			try {
+				names.add(javaClass.getName());
+			} catch (Throwable ignore) {
+			}
+		}
 		this.classes = new ArrayList<JClass>(javaClasses.size());
 		for (JavaClass javaClass : javaClasses) {
+			// 内部类（CardView$CardViewApi21 / CardView$1 ...）不单独列出，
+			// 统一并入外部类的源码里显示（见 JClass#getContent）
+			if (isInnerClass(javaClass, names)) {
+				continue;
+			}
 			classes.add(new JClass(javaClass));
 		}
 		//update();
+	}
+
+	private static boolean isInnerClass(JavaClass javaClass, java.util.Set<String> names) {
+		try {
+			if (javaClass.isInner()) {
+				return true;
+			}
+			String name = javaClass.getName();
+			int idx = name.lastIndexOf('$');
+			if (idx > 0 && names.contains(name.substring(0, idx))) {
+				return true;
+			}
+		} catch (Throwable ignore) {
+		}
+		return false;
 	}
 
 	public JPackage(String name) {
